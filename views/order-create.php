@@ -1,19 +1,24 @@
 <?php require_once __DIR__ . '/templates/header.php'; ?>
 
-<h2 class="mb-4">⊕ Créer un nouveau client</h2>
+<h2 class="mb-4">⊕ Créer une nouvelle commande</h2>
 
-<form action="?action=client-store" method="POST">
+<form action="?action=order-store" method="POST">
     <div class="mb-3">
-        <label for="name" class="form-label">Nom :</label>
-        <input type="text" class="form-control" id="name" name="name" required>
+        <label for="title" class="form-label">Titre :</label>
+        <input type="text" class="form-control" id="title" name="title" required>
     </div>
     <div class="mb-3">
-        <label for="email" class="form-label">Email :</label>
-        <input type="text" class="form-control" id="email" name="email" required>
+        <label for="status" class="form-label">Statut (en cours / expédiée / livrée) :</label>
+        <input type="text" class="form-control" id="status" name="status" required>
     </div>
     <div class="mb-3">
-        <label for="telephone" class="form-label">Telephone :</label>
-        <input type="text" class="form-control" id="telephone" name="telephone" required>
+        <label for="client_id" class="form-label">Client :</label>
+        <select class="form-control" name="client_id" id="client_id">
+            <option value="-">- Sélectionnez le client</option>
+        <?php foreach ($clients as $client): ?>
+            <option value="<?= $client->getId() ?>"><?= $client->getName() ?></option>
+        <?php endforeach; ?>
+        </select>
     </div>
     <button type="submit" class="btn btn-primary">Ajouter</button>
 </form>

@@ -31,6 +31,7 @@ class OrderController
 
     public function create()
     {
+        $clients = $this->clientRepository->getClients();
         require_once __DIR__ . '/../views/order-create.php';
     }
 
@@ -39,6 +40,7 @@ class OrderController
         $order = new Order();
         $order->setTitle($_POST['title']);
         $order->setStatus($_POST['status']);
+        $order->setClientId($_POST['client_id']);
         $this->orderRepository->create($order);
 
         header('Location: ?');
@@ -47,6 +49,7 @@ class OrderController
     public function edit(int $id)
     {
         $order = $this->orderRepository->getOrder($id);
+        $clients = $this->clientRepository->getClients();
         require_once __DIR__ . '/../views/order-edit.php';
     }
 
@@ -56,6 +59,7 @@ class OrderController
         $order->setId($_POST['id']);
         $order->setTitle($_POST['title']);
         $order->setStatus($_POST['status']);
+        $order->setClientId($_POST['client_id']);
         $this->orderRepository->update($order);
 
         header('Location: ?');

@@ -2,95 +2,111 @@
 
 ## Architecture du projet
 
-Création des dossiers et fichiers de base
-
 ```
-/mvc-tasks
+/mvc-clients-orders
 |- /controllers
-|  |- TaskController.php 
+|  |- ClientController.php 
+|  |- OrderController.php
 |- /lib
 |  |- database.php
 |- /models
 |  |- /repositories
-|  |  |- TaskRepository.php
-|  |- Task.php
+|  |  |- ClientRepository.php
+|  |  |- OrderRepository.php
+|  |- Client.php
+|  |- Order.php
 |- /views
 |  |- /templates
 |  |  |- footer.php
 |  |  |- header.php
 |  |- 404.php
-|  |- create.php
-|  |- edit.php
-|  |- home.php
-|  |- view-tasks.php
+|  |- client-create.php
+|  |- client-edit.php
+|  |- client-list.php
+|  |- client-view.php
+|  |- order-create.php
+|  |- order-edit.php
+|  |- order-list.php
+|  |- order-view.php
 |- index.php
 |- README.md
 ```
 
-## Création du modèle Task
+## Comment faire un lien 1-N entre deux tables 
 
-- un modèle qui représente un enregistrement de la table `task`
-- un repository qui permet d'accéder aux fonctions du CRUD
-    - getTasks : la liste de toutes les tâches
-    - getTask(id) : récupère une seule tâche
-    - create
-    - update
-    - delete
+### Mettre à jour la couche Model
 
+#### Créer la colonne avec la clé étrangère dans la table Order
 
-Explication du bindParam
-```php
+```sql
+ALTER TABLE orders
+ADD COLUMN client_id INT NULL;
+
 /**
-* 
-* $task = {
-*    id: 1
-*    title: 'Suivre le cours'
-*    description: 'Cours php mvc et dao'
-*    status: 'Terminé'
-* }
-* $task->title ===>>>> 'Suivre le cours'
-* 
-* UPDATE 
-*  tasks 
-* SET 
-*  title = :title, 
-*  description = :description, 
-*  status = :status 
-* WHERE 
-*  id = :id
-* 
-* bindParam(':title', $task->title);
-* bindParam(':description', $task->description);
-* 
-* UPDATE 
-*  tasks 
-* SET 
-*  title = 'Suivre le cours', 
-*  description = 'Cours php mvc et dao', 
-*  status = Terminé
-* WHERE 
-*  id = 1
-* 
-*/
+ *  SOIT DELETE CASCADE, SOIT DELETE SET NULL
+ */ 
+
+ALTER TABLE orders -- on modifie la table orders
+ADD CONSTRAINT fk_orders_clients -- on nomme la contrainte
+FOREIGN KEY (client_id) REFERENCES clients(id) -- on établie une clé étrangère sur le champ client_id vers clients.id
+-- SOIT
+ON DELETE CASCADE; -- si le client est supprimé, toutes ses commandes le seront aussi
+-- SOIT
+ON DELETE SET NULL; -- si le client est supprimé, le champ client_id de orders devient NULL
 ```
 
-- Ecrire les getters et les setters de la classe `Task`
-   - passer les attributs de la classe en privé
-   - créer les getters et setters de chaque attribut de la classe `Task`
-   - dans le `TaskRepository`, modifier l'appel attributs pour passer aux getters et setters
-   - dans les setters de `title`, `description` et `status`, mettre les `htmlspecialchars` pour sécuriser les données en paramètre
-- Déplacer la classe `TaskRepository` dans son propre dossier (`models/repositories`)
-   - nouveau fichier `models/repositories/TaskRepository.php`
-- Créer la vue qui affiche toutes les tâches sur la page index.php.
-   - nouveau fichier `views/home.php` qui boucle sur les `$tasks` de l'`index.php`
-- Créer le `routeur` qui va permettre de se déplacer de page en page. 
-   - Défini un paramètre d'URL ($_GET) `action` et qui a comme valeur `view` et paramètre `id`
-- Créer la vue qui affiche une seule tâche
-   - nouveau fichier `views/view-task.php` qui affiche le détail d'une tâche
-- Ajouter un système de templates avec `header.php` et `footer.php`
-- Ajouter la classe `TaskController` dans le dossier `controllers`
-- Modifier le routeur pour le rendre disponible aux `action`
-   - `view` affiche une tâche
-   - `create` affiche le formulaire de création
-   - `index` affiche la liste des tâches
-   - `store` enregistre la tâche dans la base de données 
+#### Ajouter le champ client_id dans le model Order
+
+- Ajouter le champ `private int $clientId;` 
+- Le getter et le setter 
+   - `public function getClientId(): int {...}`
+   - `public function setClientId(int $clientId): void {...}`
+
+#### Modifier les méthodes d'hydratation dans le repository OrderRepository
+
+- `getOrders()` : cf. ligne 26
+- `getOrder(int $id)` : cf. ligne 71
+- `create(Order $order)` : 
+   - modifier la requête `INSERT INTO` pour ajouter le champ `client_id`
+      - cf. ligne 87
+   - modifier le statement execute pour gérer le nouveau paramètre 
+      - cf. ligne 101
+- `update(Order $order)` : 
+   - idem que pour la méthode `create()`
+
+#### Ajouter une méthode dans OrderRepository pour récupérer les commandes pour un client
+
+- `public function getOrdersByClientId(int $id): array {...}`
+   - cf. ligne 36
+
+### Mettre à jour la couche Controller
+
+#### Pour afficher les commandes pour un client
+
+- Dans le controller `ClientController.php`, appeler le `OrderRepository` 
+   - cf. `ClientController.php` ligne 9 / 14 
+- Dans les fonctions qui requièrent d'afficher les commandes pour chaque client, récupérer les commandes avec la nouvelle fonction `getOrdersByClientId()` du `OrderRepository`
+   - cf. `ClientController.php` ligne 27
+- Dans la vue afférente, afficher les commandes sous forme de tableau
+   - cf. `client-view.php` ligne 11 jusqu'à 47
+
+#### Pour afficher le client d'une commande
+
+- Dans le controller `OrderController.php`, appeler le `ClientRepository`
+   - cf. `OrderController.php` ligne 9 / 14 
+- Dans les fonctions qui requièrent d'afficher le client pour la commande, récupérer le client avec la fonction `getClient` du `ClientRepository` grâce au champ `client_id` de la commande
+   - cf. `OrderController.php` ligne 27
+- Dans la vue afférente, afficher le client 
+   - cf. `order-view.php` ligne 5
+
+## Pour aller plus loin
+
+- Dans la vue pour ajouter une commande, ajouter un champ `<select>` qui contient tous les clients pour pouvoir insérer dans la table `orders` le `client_id`
+   - Dans le controller `OrderController.php`, passer la liste des clients aux vues create et edit pour enregistrer en base
+      - cf. ligne 34 / 52 
+   - Dans les vues `order-create.php` et `order-edit.php` ajouter les selects
+      - cf. ligne 16 à 21 dans les 2 fichiers
+- Pour sauvegarder en base de données, modifier les méthodes `store` et `update` 
+   - cf. ligne 43 / 62
+
+...

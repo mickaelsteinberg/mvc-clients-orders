@@ -79,11 +79,12 @@ class OrderRepository
     {
         $statement = $this->connection
                 ->getConnection()
-                ->prepare('INSERT INTO orders (title, status) VALUES (:title, :status);');
+                ->prepare('INSERT INTO orders (title, status, client_id) VALUES (:title, :status, :clientId);');
 
         return $statement->execute([
             'title' => $order->getTitle(),
-            'status' => $order->getStatus()
+            'status' => $order->getStatus(),
+            'clientId' => $order->getClientId()
         ]);
     }
 
@@ -91,12 +92,13 @@ class OrderRepository
     {
         $statement = $this->connection
                 ->getConnection()
-                ->prepare('UPDATE order SET title = :title, status = :status WHERE id = :id');
+                ->prepare('UPDATE order SET title = :title, status = :status, client_id = :client_id WHERE id = :id');
 
         return $statement->execute([
             'id' => $order->getId(),
             'title' => $order->getTitle(),
-            'status' => $order->getStatus()
+            'status' => $order->getStatus(),
+            'clientId' => $order->getClientId()
         ]);
     }
 
