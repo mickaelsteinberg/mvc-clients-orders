@@ -1,4 +1,4 @@
-# MVC Simple en PHP - Gestion de tâches
+# MVC Simple en PHP - Gestion de clients et commandes
 
 ## Architecture du projet
 

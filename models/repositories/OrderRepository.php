@@ -92,7 +92,7 @@ class OrderRepository
     {
         $statement = $this->connection
                 ->getConnection()
-                ->prepare('UPDATE order SET title = :title, status = :status, client_id = :client_id WHERE id = :id');
+                ->prepare('UPDATE orders SET title = :title, status = :status, client_id = :clientId WHERE id = :id');
 
         return $statement->execute([
             'id' => $order->getId(),
